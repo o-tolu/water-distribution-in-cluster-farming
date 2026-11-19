@@ -1,0 +1,403 @@
+
+{% extends 'base/main.html' %}
+{% block content %}
+    <style>
+        
+        .header {
+            font-size: 40px;
+            font-weight: bold;
+            color: #e8f6ff;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 7px;
+        }
+
+        .form-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 90%;
+            max-width: 360px;
+            margin: 30px auto 20px;
+        }
+
+        h2 {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+
+        h5 {
+            /* color: rgba(255, 255, 255, 0.7); */
+            color: #90caf9;
+            font-weight: normal;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+
+        .input-group {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .input-field-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #64b5f6;
+            outline: none;
+            box-shadow: 0 0 10px rgba(100, 181, 246, 0.3);
+        }
+
+        .input-group label {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -10px;
+            left: 10px;
+            font-size: 12px;
+            padding: 0 4px;
+            color: #64b5f6;
+            background: rgba(26, 32, 44, 0.8);
+            border-radius: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(45deg, #2196f3, #64b5f6);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #1976d2, #42a5f5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            background: none;
+            border: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+            padding: 0;
+        }
+
+        .toggle-password:hover {
+            color: #64b5f6;
+        }
+
+        .login-link {
+            color: #90caf9;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 15px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .login-link:hover {
+            color: #64b5f6;
+            text-decoration: underline;
+        }
+
+        .error {
+            color: #ff8a80;
+            font-size: 12px;
+            margin-top: 4px;
+            text-align: left;
+            padding-left: 4px;
+        }
+
+        @media (max-width: 768px) {
+            
+            
+            
+            .header {
+                font-size: 30px;
+                
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Smart Water Distribution Management</div>
+    <div class="form-container">
+        <h2>Sign Up</h2>
+        <h5>(Fill all the fields with your correct information)</h5>
+        
+        <!-- Rest of the HTML remains the same -->
+        <form method="POST" action="{% url 'register' %}">
+          {% csrf_token %}
+
+        
+              <div class="input-group">
+                  <div class="input-field-container">
+                      <input type="text" id="firstname" name="firstname" placeholder=" " value="{{ form.firstname.value|default_if_none:'' }}" required>
+                      <label for="firstname">First Name</label>
+                  </div>
+                  {% if form.firstname.errors %}
+                      <div class="error">
+                          {% for error in form.firstname.errors %}
+                              <p>{{ error }}</p>
+                          {% endfor %}
+                      </div>
+                  {% endif %}
+              </div>
+
+              <div class="input-group">
+                  <div class="input-field-container">
+                      <input type="text" id="lastname" name="lastname" placeholder=" " value="{{ form.lastname.value|default_if_none:'' }}" required>
+                      <label for="lastname">Last Name</label>
+                  </div>
+                  {% if form.lastname.errors %}
+                      <div class="error">
+                          {% for error in form.lastname.errors %}
+                              <p>{{ error }}</p>
+                          {% endfor %}
+                      </div>
+                  {% endif %}
+              </div>
+          
+
+          <div class="input-group">
+              <div class="input-field-container">
+                  <input type="email" id="email" name="email" placeholder=" " value="{{ form.email.value|default_if_none:'' }}" required>
+                  <label for="email">Email</label>
+              </div>
+              {% if form.email.errors %}
+                  <div class="error">
+                      {% for error in form.email.errors %}
+                          <p>{{ error }}</p>
+                      {% endfor %}
+                  </div>
+              {% endif %}
+          </div>
+
+          <div class="input-group">
+            <div class="input-field-container">
+                <input type="tel" 
+                       id="phonenumber" 
+                       name="mobile" 
+                       placeholder=" " 
+                       value="{{ form.mobile.value|default_if_none:'' }}"
+                       pattern="^\+234[789][01]\d{8}$"
+                       maxlength="14"
+                       required>
+                <label for="phonenumber">Phone Number</label>
+            </div>
+            {% if form.mobile.errors %}
+                <div class="error">
+                    {% for error in form.mobile.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <!-- <small class="help-text" style="color: #90caf9; font-size: 12px; margin-top: 4px;">
+                Format: +2348012345678
+            </small> -->
+        </div>
+
+        <!-- Add these fields after the mobile number input group -->
+        <div class="input-group">
+            <div class="input-field-container">
+                <input type="text" 
+                    id="rfid_number" 
+                    name="rfid_number" 
+                    placeholder=" " 
+                    value="{{ form.rfid_number.value|default_if_none:'' }}"
+                    required>
+                <label for="rfid_number">RFID Number</label>
+            </div>
+            {% if form.rfid_number.errors %}
+                <div class="error">
+                    {% for error in form.rfid_number.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <div class="input-field-container">
+                <input type="text" 
+                    id="matric_number" 
+                    name="matric_number" 
+                    placeholder=" " 
+                    value="{{ form.matric_number.value|default_if_none:'' }}"
+                    required>
+                <label for="matric_number">Matric Number</label>
+            </div>
+            {% if form.matric_number.errors %}
+                <div class="error">
+                    {% for error in form.matric_number.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+          <div class="input-group">
+              <div class="input-field-container">
+                  <input type="password" id="password" name="password1" placeholder=" " value="{{ form.password1.value|default_if_none:'' }}" required>
+                  <label for="password">Password</label>
+                  <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                      <i class="bi bi-eye"></i>
+                      <i class="bi bi-eye-slash" style="display: none;"></i>
+                  </button>
+              </div>
+              {% if form.password1.errors %}
+                  <div class="error">
+                      {% for error in form.password1.errors %}
+                          <p>{{ error }}</p>
+                      {% endfor %}
+                  </div>
+              {% endif %}
+          </div>
+
+          <div class="input-group">
+              <div class="input-field-container">
+                  <input type="password" id="confirm-password" name="password2" placeholder=" " value="{{ form.password2.value|default_if_none:'' }}" required>
+                  <label for="confirm-password">Confirm Password</label>
+                  <button type="button" class="toggle-password" onclick="togglePassword('confirm-password')">
+                      <i class="bi bi-eye"></i>
+                      <i class="bi bi-eye-slash" style="display: none;"></i>
+                  </button>
+              </div>
+              {% if form.password2.errors %}
+                  <div class="error">
+                      {% for error in form.password2.errors %}
+                          <p>{{ error }}</p>
+                      {% endfor %}
+                  </div>
+              {% endif %}
+          </div>
+
+          <button type="submit" class="btn">Sign Up <i class="bi bi-person-plus"></i></button>
+
+          {% if form.non_field_errors %}
+              <div class="error">
+                  {% for error in form.non_field_errors %}
+                      <p>{{ error }}</p>
+                  {% endfor %}
+              </div>
+          {% endif %}
+      </form>
+      <a class="login-link" href="{% url 'login' %}">Already have an account? Log in</a>
+  </div>
+
+  <script>
+    
+    document.getElementById('phonenumber').addEventListener('input', function(e) {
+        let input = e.target;
+        let value = input.value;
+        
+        // Only modify if this is a new input character (not backspace/delete)
+        if (value.length > input.oldLength && !value.startsWith('+234')) {
+            // Remove any non-digits and existing +234 prefix
+            value = value.replace(/\D/g, '');
+            
+            // If number starts with 0, remove it
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            
+            // Add the prefix
+            value = '+234' + value;
+        }
+        
+        // Store current length for next comparison
+        input.oldLength = value.length;
+        
+        // Update input value
+        input.value = value;
+        
+        // Validate the format
+        const isValid = /^\+234[789][01]\d{8}$/.test(value);
+        input.setCustomValidity(isValid ? '' : 'Please enter a valid Nigerian phone number');
+    });
+
+    // Format any existing value on page load
+    window.addEventListener('load', function() {
+        const phoneInput = document.getElementById('phonenumber');
+        if (phoneInput.value) {
+            let value = phoneInput.value.replace(/\D/g, '');
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            if (!value.startsWith('234')) {
+                value = '234' + value;
+            }
+            phoneInput.value = '+' + value;
+        }
+        // Initialize oldLength property
+        phoneInput.oldLength = phoneInput.value.length;
+    });
+
+
+    function togglePassword(fieldId) {
+        const passwordField = document.getElementById(fieldId);
+        const toggleButton = passwordField.nextElementSibling.nextElementSibling;
+        const eyeIcon = toggleButton.querySelector('.bi-eye');
+        const eyeSlashIcon = toggleButton.querySelector('.bi-eye-slash');
+        
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            eyeIcon.style.display = "none";
+            eyeSlashIcon.style.display = "inline-block";
+        } else {
+            passwordField.type = "password";
+            eyeIcon.style.display = "inline-block";
+            eyeSlashIcon.style.display = "none";
+        }
+    }
+  </script>
+{% endblock content %}

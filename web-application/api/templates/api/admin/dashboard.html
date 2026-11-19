@@ -1,0 +1,195 @@
+{% extends 'api/admin/base.html' %}
+
+{% block admin_content %}
+<style>
+    .dashboard-overview {
+        color: #e8f6ff;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+        gap: min(20px, 4vw);
+        margin-bottom: min(30px, 6vw);
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: min(25px, 5vw);
+        display: flex;
+        align-items: center;
+        gap: min(15px, 3vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    }
+    
+    .stat-card i {
+        font-size: min(2.5rem, 8vw);
+        color: #64b5f6;
+        background: rgba(100, 181, 246, 0.1);
+        padding: min(15px, 3vw);
+        border-radius: 12px;
+    }
+    
+    .stat-content h3 {
+        font-size: min(18px, 4.5vw);
+        margin-bottom: min(8px, 2vw);
+        font-weight: 600;
+        color: #90caf9;
+    }
+    
+    .stat-value {
+        font-size: min(28px, 7vw);
+        font-weight: bold;
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+        background: linear-gradient(45deg, #64b5f6, #42a5f5);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .recent-activity {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: min(20px, 4vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .recent-activity h3 {
+        font-size: min(22px, 5.5vw);
+        margin-bottom: min(20px, 4vw);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .recent-activity h3 i {
+        color: #64b5f6;
+    }
+    
+    .activity-list {
+        display: grid;
+        gap: min(15px, 3vw);
+    }
+    
+    .activity-item {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: min(20px, 4vw);
+        display: flex;
+        align-items: flex-start;
+        gap: min(15px, 3vw);
+        transition: all 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        transform: translateX(5px);
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .activity-icon {
+        background: rgba(100, 181, 246, 0.1);
+        padding: min(12px, 2.5vw);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .activity-icon i {
+        font-size: min(20px, 5vw);
+        color: #64b5f6;
+    }
+    
+    .activity-details {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-size: min(16px, 4vw);
+        font-weight: 500;
+        margin: 0;
+        color: #e8f6ff;
+    }
+    
+    .activity-meta {
+        font-size: min(14px, 3.5vw);
+        color: rgba(255, 255, 255, 0.7);
+        margin: min(5px, 1vw) 0;
+    }
+    
+    .activity-time {
+        font-size: min(12px, 3vw);
+        color: rgba(255, 255, 255, 0.5);
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .no-activity {
+        text-align: center;
+        padding: min(20px, 4vw);
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        font-size: min(14px, 3.5vw);
+    }
+</style>
+
+<div class="dashboard-overview">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="bi bi-people-fill"></i>
+            <div class="stat-content">
+                <h3>Total Users</h3>
+                <p class="stat-value">{{ total_users }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <i class="bi bi-cpu"></i>
+            <div class="stat-content">
+                <h3>Active Sensors</h3>
+                <p class="stat-value">{{ total_active_sensors }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <i class="bi bi-currency-exchange"></i>
+            <div class="stat-content">
+                <h3>Recent Tokens</h3>
+                <p class="stat-value">{{ recent_tokens.count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="recent-activity">
+        <h3><i class="bi bi-clock-history"></i> Recent Token Purchases</h3>
+        <div class="activity-list">
+            {% for token in recent_tokens %}
+            <div class="activity-item">
+                <!-- <div class="activity-icon">
+                    <i class="bi bi-water"></i>
+                </div> -->
+                <div class="activity-details">
+                    <p class="activity-title">{{ token.user.firstname }} purchased a token</p>
+                    <p class="activity-meta">
+                        Volume: {{ token.volume_limit }}L | 
+                        Amount: <i class="bi bi-coin" style="margin: 0 2px;"></i> {{ token.token_amount }}
+                    </p>
+                    <p class="activity-time">{{ token.start_date|timesince }} ago</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-activity">No recent token purchases</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

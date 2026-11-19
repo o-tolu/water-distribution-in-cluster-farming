@@ -1,0 +1,680 @@
+{% extends 'api/admin/base.html' %}
+
+{% block admin_content %}
+<style>
+    .analytics-dashboard {
+        color: #e8f6ff;
+    }
+    
+    .analytics-dashboard h2 {
+        font-size: min(28px, 6vw);
+        font-weight: 600;
+        margin-bottom: min(25px, 5vw);
+        display: flex;
+        align-items: center;
+        gap: min(10px, 2vw);
+    }
+
+    .analytics-dashboard h2 i {
+        color: #64b5f6;
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+        gap: min(20px, 4vw);
+        margin: min(20px, 4vw) 0;
+    }
+    
+    .metric-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: min(25px, 5vw);
+        display: flex;
+        align-items: center;
+        gap: min(15px, 3vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    }
+    
+    .metric-icon {
+        background: rgba(100, 181, 246, 0.1);
+        width: min(60px, 15vw);
+        height: min(60px, 15vw);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 1px solid rgba(100, 181, 246, 0.2);
+    }
+    
+    .metric-icon i {
+        font-size: min(24px, 6vw);
+        color: #64b5f6;
+    }
+    
+    .metric-content {
+        flex: 1;
+    }
+    
+    .metric-content h3 {
+        font-size: min(18px, 4.5vw);
+        color: #90caf9;
+        margin-bottom: min(5px, 1vw);
+        font-weight: 500;
+    }
+    
+    .metric-value {
+        font-size: min(28px, 7vw);
+        font-weight: 700;
+        margin: min(5px, 1vw) 0;
+        font-family: 'Montserrat', sans-serif;
+        background: linear-gradient(45deg, #64b5f6, #42a5f5);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .metric-label {
+        font-size: min(14px, 3.5vw);
+        color: rgba(255, 255, 255, 0.6);
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .charts-section {
+        margin-top: min(40px, 8vw);
+    }
+    
+    .chart-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: min(25px, 5vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .chart-container:hover {
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    }
+    
+    .chart-container h3 {
+        font-size: min(22px, 5.5vw);
+        color: #90caf9;
+        margin-bottom: min(20px, 4vw);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: min(10px, 2vw);
+    }
+    
+    canvas {
+        width: 100% !important;
+        max-height: min(300px, 70vh);
+        margin-top: min(15px, 3vw);
+    }
+
+    /* Animation for metrics cards */
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .metric-card {
+        animation: slideIn 0.5s ease-out forwards;
+        animation-delay: calc(var(--animation-order) * 0.1s);
+    }
+
+    .section-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+        gap: min(20px, 4vw);
+        margin: min(20px, 4vw) 0;
+    }
+
+    .overview-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: min(25px, 5vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .overview-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    }
+
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: min(15px, 3vw);
+    }
+
+    .date-selector {
+        display: flex;
+        gap: min(10px, 2vw);
+        align-items: center;
+        flex-wrap: wrap;
+        margin-left: 5px;
+    }
+
+    .date-selector input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e8f6ff;
+        padding: min(8px, 2vw);
+        border-radius: 8px;
+        width: 80%;
+        max-width: 160px;
+        font-size: min(16px, 4vw);
+
+    }
+
+    .chart-filters {
+        display: flex;
+        gap: min(10px, 2vw);
+        margin-bottom: min(15px, 3vw);
+    }
+
+    .filter-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e8f6ff;
+        padding: min(8px, 2vw) min(16px, 4vw);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+        background: rgba(100, 181, 246, 0.2);
+        border-color: #64b5f6;
+    }
+</style>
+
+<div class="analytics-dashboard">
+    <h2><i class="bi bi-graph-up"></i> Analytics Overview</h2>
+
+    <div class="metrics-grid">
+        <div class="metric-card total-tokens" style="--animation-order: 1">
+            <div class="metric-icon">
+                <i class="bi bi-ticket-perforated"></i>
+            </div>
+            <div class="metric-content">
+                <h3>Total Tokens</h3>
+                <p class="metric-value">{{ analytics.total_tokens }}</p>
+                <p class="metric-label">All time</p>
+            </div>
+        </div>
+
+        <div class="metric-card active-tokens" style="--animation-order: 2">
+            <div class="metric-icon">
+                <i class="bi bi-lightning"></i>
+            </div>
+            <div class="metric-content">
+                <h3>Active Tokens</h3>
+                <p class="metric-value">{{ analytics.active_tokens }}</p>
+                <p class="metric-label">Currently active</p>
+            </div>
+        </div>
+
+        <div class="metric-card total-volume" style="--animation-order: 3">
+            <div class="metric-icon">
+                <i class="bi bi-water"></i>
+            </div>
+            <div class="metric-content">
+                <h3>Total Volume</h3>
+                <p class="metric-value">{{ analytics.total_volume|floatformat:2 }}L</p>
+                <p class="metric-label">Cumulative</p>
+            </div>
+        </div>
+
+        <div class="metric-card monthly-tokens" style="--animation-order: 4">
+            <div class="metric-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="metric-content">
+                <h3>Monthly Tokens</h3>
+                <p class="metric-value">{{ analytics.monthly_tokens }}</p>
+                <p class="metric-label">Last 30 days</p>
+            </div>
+        </div>
+        <div class="metric-card user-activity" style="--animation-order: 5">
+            <div class="metric-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="metric-content">
+                <h3>Active Users</h3>
+                <p class="metric-value">{{ analytics.active_users }}</p>
+                <p class="metric-label">Currently using system</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Distribution Section -->
+    <div class="section-grid">
+        <!-- Token Distribution Chart -->
+        <div class="overview-card" id="tokenDistributionCard">
+            <div class="chart-header">
+                <h3><i class="bi bi-bar-chart"></i> Token Distribution</h3>
+                <div class="date-selector">
+                    <input type="date" id="startDate" class="date-input">
+                    <input type="date" id="endDate" class="date-input">
+                </div>
+            </div>
+            <div class="chart-filters">
+                <button class="filter-btn" data-timeframe="daily">Daily</button>
+                <button class="filter-btn" data-timeframe="weekly">Weekly</button>
+                <button class="filter-btn" data-timeframe="monthly">Monthly</button>
+            </div>
+            <canvas id="tokenDistributionChart"></canvas>
+            <div class="chart-error" style="display:none;color:red;"></div>
+        </div>
+
+        <!-- Volume Usage Chart -->
+        <div class="overview-card" id="volumeUsageCard">
+            <h3><i class="bi bi-water"></i> Volume Usage Trends</h3>
+            <canvas id="volumeUsageChart"></canvas>
+            <div class="chart-error" style="display:none;color:red;"></div>
+        </div>
+    </div>
+
+    <!-- User Activity Section -->
+    <div class="section-grid">
+        <!-- Sensor Distribution Chart -->
+        <div class="overview-card" id="sensorDistributionCard">
+            <h3><i class="bi bi-cpu"></i> Sensor Distribution</h3>
+            <canvas id="sensorDistributionChart"></canvas>
+            <div class="chart-error" style="display:none;color:red;"></div>
+        </div>
+
+        <!-- Token Usage Chart -->
+        <div class="overview-card" id="tokenUsageCard">
+            <h3><i class="bi bi-clock-history"></i> Token Usage Patterns</h3>
+            <canvas id="tokenUsageChart"></canvas>
+            <div class="chart-error" style="display:none;color:red;"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    
+    class AnalyticsDashboard {
+       
+        constructor() {
+            this.charts = {};
+            this.debug = true;
+            this.initializeEventListeners();
+            this.setupDateDefaults();
+            this.initializeCharts();
+        }
+    
+        log(message, data = null) {
+            if (this.debug) {
+                console.log(`[Analytics Dashboard] ${message}`, data || '');
+            }
+        }
+    
+        showError(elementId, message) {
+            const errorDiv = document.querySelector(`#${elementId} .chart-error`);
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            this.log(`Error in ${elementId}:`, message);
+        }
+    
+        initializeEventListeners() {
+            try {
+                // Date range listeners
+                document.querySelectorAll('.date-input').forEach(input => {
+                    input.addEventListener('change', () => this.updateCharts());
+                });
+    
+                // Timeframe filter listeners
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.changeTimeframe(e.target.dataset.timeframe);
+                    });
+                });
+    
+                this.log('Event listeners initialized');
+            } catch (error) {
+                this.log('Error initializing event listeners:', error);
+            }
+        }
+    
+        setupDateDefaults() {
+            try {
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 30);
+    
+                document.getElementById('startDate').valueAsDate = startDate;
+                document.getElementById('endDate').valueAsDate = endDate;
+                
+                this.log('Date defaults set', { startDate, endDate });
+            } catch (error) {
+                this.log('Error setting up date defaults:', error);
+            }
+        }
+    
+        async initializeCharts() {
+            try {
+                await this.fetchAndUpdateCharts();
+                this.log('Charts initialized successfully');
+            } catch (error) {
+                this.log('Error initializing charts:', error);
+            }
+        }
+    
+        async fetchAndUpdateCharts() {
+            try {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                this.log('Fetching chart data', { startDate, endDate });
+    
+                const response = await fetch(`/api/api/admin/analytics/?start_date=${startDate}&end_date=${endDate}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                this.log('Received chart data:', data);
+    
+                this.updateTokenDistributionChart(data);
+                this.updateVolumeUsageChart(data);
+                this.updateSensorDistributionChart(data);
+                this.updateTokenUsageChart(data);
+            } catch (error) {
+                this.log('Error fetching chart data:', error);
+                this.showErrorForAllCharts('Failed to load chart data');
+            }
+        }
+    
+        showErrorForAllCharts(message) {
+            ['tokenDistribution', 'volumeUsage', 'sensorDistribution', 'tokenUsage']
+                .forEach(id => this.showError(`${id}Card`, message));
+        }
+    
+        getChartConfig(type, data, options = {}) {
+            // Create default configuration with styled axes
+            const defaultConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#e8f6ff' // Light blue color for x-axis labels
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#e8f6ff' // Light blue color for y-axis labels
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e8f6ff' // Color for legend labels
+                        }
+                    },
+                    tooltip: {
+                        titleColor: '#e8f6ff',
+                        bodyColor: '#e8f6ff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)'
+                    }
+                }
+            };
+            
+            // Special handling for chart types without traditional axes
+            if (type === 'doughnut' || type === 'pie') {
+                delete defaultConfig.scales;
+            }
+            
+            // Deep merge with user provided options
+            const mergedOptions = this.mergeDeep(defaultConfig, options);
+            
+            return {
+                type,
+                data,
+                options: mergedOptions
+            };
+        }
+        
+        // Helper method for deep merging objects
+        mergeDeep(target, source) {
+            if (!source) return target;
+            const output = Object.assign({}, target);
+            
+            if (this.isObject(target) && this.isObject(source)) {
+                Object.keys(source).forEach(key => {
+                    if (this.isObject(source[key])) {
+                        if (!(key in target)) {
+                            Object.assign(output, { [key]: source[key] });
+                        } else {
+                            output[key] = this.mergeDeep(target[key], source[key]);
+                        }
+                    } else {
+                        Object.assign(output, { [key]: source[key] });
+                    }
+                });
+            }
+            
+            return output;
+        }
+        
+        isObject(item) {
+            return (item && typeof item === 'object' && !Array.isArray(item));
+        }
+    
+        updateTokenDistributionChart(data) {
+            try {
+                const ctx = document.getElementById('tokenDistributionChart').getContext('2d');
+                
+                if (this.charts.tokenDistribution) {
+                    this.charts.tokenDistribution.destroy();
+                }
+    
+                this.charts.tokenDistribution = new Chart(ctx, this.getChartConfig('bar', {
+                    labels: data.token_labels,
+                    datasets: [{
+                        label: 'Token Distribution',
+                        data: data.token_data,
+                        backgroundColor: 'rgba(100, 181, 246, 0.2)',
+                        borderColor: '#64b5f6',
+                        borderWidth: 1
+                    }]
+                }));
+    
+                this.log('Token distribution chart updated');
+            } catch (error) {
+                this.showError('tokenDistributionCard', 'Failed to update token distribution chart');
+            }
+        }
+
+        updateVolumeUsageChart(data) {
+            try {
+                const ctx = document.getElementById('volumeUsageChart').getContext('2d');
+                
+                if (this.charts.volumeUsage) {
+                    this.charts.volumeUsage.destroy();
+                }
+
+                this.charts.volumeUsage = new Chart(ctx, this.getChartConfig('line', {
+                    labels: data.volume_labels,
+                    datasets: [{
+                        label: 'Volume Usage (L)',
+                        data: data.volume_data,
+                        backgroundColor: 'rgba(100, 181, 246, 0.2)',
+                        borderColor: '#64b5f6',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }]
+                }, {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Volume (L)',
+                                color: '#90caf9' // Color for the axis title
+                            }
+                        }
+                    }
+                }));
+
+                this.log('Volume usage chart updated');
+            } catch (error) {
+                this.showError('volumeUsageCard', 'Failed to update volume usage chart');
+                this.log('Error updating volume usage chart:', error);
+            }
+        }
+
+        updateSensorDistributionChart(data) {
+            try {
+                const ctx = document.getElementById('sensorDistributionChart').getContext('2d');
+                
+                if (this.charts.sensorDistribution) {
+                    this.charts.sensorDistribution.destroy();
+                }
+
+                // Calculate sensor distribution from metrics
+                const sensorData = {
+                    labels: ['Active Tokens', 'Inactive Tokens'],
+                    data: [
+                        data.metrics.active_tokens,
+                        data.metrics.total_tokens - data.metrics.active_tokens
+                    ]
+                };
+
+                this.charts.sensorDistribution = new Chart(ctx, this.getChartConfig('doughnut', {
+                    labels: sensorData.labels,
+                    datasets: [{
+                        data: sensorData.data,
+                        backgroundColor: [
+                            'rgba(100, 181, 246, 0.6)',
+                            'rgba(158, 158, 158, 0.6)'
+                        ],
+                        borderColor: [
+                            '#64b5f6',
+                            '#9e9e9e'
+                        ],
+                        borderWidth: 1
+                    }]
+                }, {
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e8f6ff' // Ensuring legend labels are also colored
+                            }
+                        }
+                    }
+                }));
+
+                this.log('Sensor distribution chart updated');
+            } catch (error) {
+                this.showError('sensorDistributionCard', 'Failed to update sensor distribution chart');
+                this.log('Error updating sensor distribution chart:', error);
+            }
+        }
+
+        updateTokenUsageChart(data) {
+            try {
+                const ctx = document.getElementById('tokenUsageChart').getContext('2d');
+                
+                if (this.charts.tokenUsage) {
+                    this.charts.tokenUsage.destroy();
+                }
+
+                // Create stacked bar chart showing token distribution over time
+                this.charts.tokenUsage = new Chart(ctx, this.getChartConfig('bar', {
+                    labels: data.token_labels,
+                    datasets: [{
+                        label: 'Daily Token Usage',
+                        data: data.token_data,
+                        backgroundColor: 'rgba(100, 181, 246, 0.6)',
+                        borderColor: '#64b5f6',
+                        borderWidth: 1
+                    }]
+                }, {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Tokens',
+                                color: '#90caf9' // Color for the axis title
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }));
+
+                this.log('Token usage chart updated');
+            } catch (error) {
+                this.showError('tokenUsageCard', 'Failed to update token usage chart');
+                this.log('Error updating token usage chart:', error);
+            }
+        }
+
+        updateCharts() {
+            this.fetchAndUpdateCharts().catch(error => {
+                this.log('Error updating charts:', error);
+                this.showErrorForAllCharts('Failed to update charts');
+            });
+        }
+    
+        async changeTimeframe(timeframe) {
+            try {
+                const buttons = document.querySelectorAll('.filter-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                
+                const activeButton = document.querySelector(`[data-timeframe="${timeframe}"]`);
+                if (activeButton) {
+                    activeButton.classList.add('active');
+                }
+    
+                await this.fetchAndUpdateCharts();
+                this.log('Timeframe changed:', timeframe);
+            } catch (error) {
+                this.log('Error changing timeframe:', error);
+                this.showErrorForAllCharts('Failed to update timeframe');
+            }
+        }
+    }
+    
+    // Initialize dashboard when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            window.analyticsDashboard = new AnalyticsDashboard();
+        } catch (error) {
+            console.error('Failed to initialize Analytics Dashboard:', error);
+        }
+    });
+    </script>
+{% endblock %}

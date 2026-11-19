@@ -1,0 +1,772 @@
+{% extends 'api/admin/base.html' %}
+
+{% block admin_content %}
+<style>
+    .users-dashboard {
+        color: #e8f6ff;
+    }
+    
+    .users-dashboard h2 {
+        font-size: min(28px, 6vw);
+        font-weight: 600;
+        margin-bottom: min(25px, 5vw);
+        display: flex;
+        align-items: center;
+        gap: min(10px, 2vw);
+    }
+
+    .users-dashboard h2 i {
+        color: #64b5f6;
+    }
+    
+    .sensors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+        gap: min(20px, 4vw);
+        margin-top: min(20px, 4vw);
+    }
+    
+    .sensor-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .sensor-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    }
+    
+    .sensor-header {
+        padding: min(20px, 4vw);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        gap: min(15px, 3vw);
+    }
+    
+    .sensor-main-info {
+        display: flex;
+        align-items: center;
+        gap: min(15px, 3vw);
+    }
+    
+    .sensor-icon {
+        width: min(50px, 12vw);
+        height: min(50px, 12vw);
+        background: rgba(100, 181, 246, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(100, 181, 246, 0.2);
+    }
+    
+    .sensor-icon i {
+        font-size: min(24px, 6vw);
+        color: #64b5f6;
+    }
+    
+    .sensor-title {
+        margin: 0;
+    }
+    
+    .sensor-title h3 {
+        font-size: min(20px, 5vw);
+        margin: 0;
+        color: #90caf9;
+    }
+    
+    .sensor-title p {
+        font-size: min(14px, 3.5vw);
+        margin: min(5px, 1vw) 0 0;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .toggle-btn {
+        background: none;
+        border: none;
+        color: #64b5f6;
+        cursor: pointer;
+        padding: min(8px, 2vw);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .toggle-btn:hover {
+        background: rgba(100, 181, 246, 0.1);
+    }
+    
+    .toggle-btn i {
+        font-size: min(20px, 5vw);
+        transition: transform 0.3s ease;
+    }
+    
+    .sensor-details {
+        padding: 0 min(20px, 4vw) min(20px, 4vw);
+        display: none;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    .detail-item {
+        padding: min(10px, 2vw) 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .detail-label {
+        font-size: min(14px, 3.5vw);
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .detail-value {
+        font-size: min(14px, 3.5vw);
+        color: #e8f6ff;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .no-sensors {
+        text-align: center;
+        padding: min(30px, 6vw);
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        font-size: min(16px, 4vw);
+    }
+
+    .expanded .toggle-btn i {
+        transform: rotate(180deg);
+    }
+
+    .expanded .sensor-details {
+        display: block;
+    }
+
+    .admin-controls {
+        margin-bottom: min(30px, 6vw);
+    }
+    
+    .admin-btn {
+        background: linear-gradient(45deg, #2196f3, #64b5f6);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        padding: min(12px, 2.5vw) min(24px, 5vw);
+        font-size: min(16px, 4vw);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: min(8px, 2vw);
+    }
+    
+    .admin-btn:hover {
+        background: linear-gradient(45deg, #1976d2, #42a5f5);
+        transform: translateY(-2px);
+    }
+    
+    .registration-form {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: min(25px, 5vw);
+        margin-bottom: min(30px, 6vw);
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    .admin-form {
+        width: 100%;
+    }
+    
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: min(20px, 4vw);
+    }
+    
+    .form-header h3 {
+        font-size: min(22px, 5.5vw);
+        color: #90caf9;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: min(8px, 2vw);
+    }
+    
+    .close-form-btn {
+        background: none;
+        border: none;
+        color: #e8f6ff;
+        cursor: pointer;
+        padding: min(8px, 2vw);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .close-form-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+        gap: min(20px, 4vw);
+    }
+    
+    .form-group {
+        position: relative;
+        margin: min(6px, 4vh) 0;
+    }
+
+    .input-field-container {
+        position: relative;
+        width: 100%;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: min(12px, 3vh) min(15px, 4vw);
+        background: rgba(255, 255, 255, 0.07);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: min(15px, 4vw);
+        color: #fff;
+        transition: all 0.3s ease;
+    }
+    
+    form-group input:focus {
+        border-color: #64b5f6;
+        outline: none;
+        box-shadow: 0 0 10px rgba(100, 181, 246, 0.3);
+    }
+    
+    .form-group label {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 15px;
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label {
+        top: -10px;
+        left: 10px;
+        font-size: 12px;
+        padding: 0 5px;
+        color: #64b5f6;
+        background: rgba(26, 32, 44, 0.8);
+        border-radius: 4px;
+    }
+    
+    .form-footer {
+        margin-top: min(25px, 5vw);
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .submit-btn {
+        background: linear-gradient(45deg, #2196f3, #64b5f6);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        padding: min(12px, 2.5vw) min(24px, 5vw);
+        font-size: min(16px, 4vw);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: min(8px, 2vw);
+    }
+    
+    .submit-btn:hover {
+        background: linear-gradient(45deg, #1976d2, #42a5f5);
+        transform: translateY(-2px);
+    }
+
+    /* Add inside your existing <style> tag */
+    .error-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+    }
+
+    .error-modal-content {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        border-radius: 15px;
+        padding: 25px;
+        width: 90%;
+        max-width: 400px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .error-modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .error-modal-header i {
+        color: #ff8a80;
+        font-size: 24px;
+        margin-right: 10px;
+    }
+
+    .error-modal-header h3 {
+        margin: 0;
+        color: #ff8a80;
+    }
+
+    .error-modal-message {
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 20px;
+    }
+
+    .error-modal-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .error-modal-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .success-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(76, 175, 80, 0.9);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+    }
+
+    .success-toast.show {
+        display: flex;
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .success-toast i {
+        font-size: 20px;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        /* margin-top: 2rem; */
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pagination-button {
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: #e8f6ff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .pagination-button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #64b5f6;
+    }
+
+    .pagination-button.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+
+    .pagination-info {
+        color: #e8f6ff;
+        font-size: 14px;
+        margin: 0 15px;
+        white-space: nowrap;
+    }
+
+    .pagination-button.first-page,
+    .pagination-button.last-page {
+        font-size: 20px;
+    }
+
+    @media screen and (max-width: 640px) {
+        .pagination {
+            gap: 8px;
+        }
+        
+        .pagination-button {
+            padding: 6px 12px;
+            min-width: 35px;
+            height: 35px;
+            font-size: 13px;
+        }
+        
+        .page-numbers {
+            order: 2;
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 5px;
+        }
+        
+        .pagination-info {
+            width: 100%;
+            text-align: center;
+            order: 3;
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<div class="users-dashboard">
+    <h2><i class="bi bi-people"></i> Users & Sensors</h2>
+    
+    <div class="admin-controls mb-4">
+        <button id="showAdminFormBtn" class="admin-btn">
+            <i class="bi bi-person-plus"></i> Register New Admin
+        </button>
+    </div>
+
+    <div id="adminRegistrationForm" class="registration-form" style="display: none;">
+        <form id="createAdminForm" class="admin-form">
+            {% csrf_token %}
+            <div class="form-header">
+                <h3><i class="bi bi-shield-lock"></i> Create New Admin</h3>
+                <button type="button" class="close-form-btn" onclick="toggleAdminForm()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <div class="input-field-container">
+                        <input type="text" id="firstname" name="firstname" placeholder=" " required>
+                        <label for="firstname">First Name</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-field-container">
+                        <input type="text" id="lastname" name="lastname" placeholder=" " required>
+                        <label for="lastname">Last Name</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-field-container">
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email Address</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-field-container">
+                        <input type="tel" id="mobile" name="mobile" placeholder=" " required>
+                        <label for="mobile">Mobile Number</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-field-container">
+                        <input type="password" id="password1" name="password1" placeholder=" " required>
+                        <label for="password1">Password</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-field-container">
+                        <input type="password" id="password2" name="password2" placeholder=" " required>
+                        <label for="password2">Confirm Password</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <button type="submit" class="submit-btn">
+                    <i class="bi bi-person-plus"></i> Create Admin
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="sensors-grid">
+        {% for sensor in sensors_data %}
+            <div class="sensor-card">
+                <div class="sensor-header" onclick="toggleDetails(this)">
+                    <div class="sensor-main-info">
+                        <div class="sensor-icon">
+                            <i class="bi bi-cpu"></i>
+                        </div>
+                        <div class="sensor-title">
+                            <h3>Sensor {{ sensor.sensor_id }}</h3>
+                            <p>{{ sensor.user__firstname }} {{ sensor.user__lastname }}</p>
+                        </div>
+                    </div>
+                    <button class="toggle-btn" type="button">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                
+                <div class="sensor-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">{{ sensor.user__email }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Mobile</span>
+                        <span class="detail-value">{{ sensor.user__mobile }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">User ID</span>
+                        <span class="detail-value">{{ sensor.user__id }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Joined</span>
+                        <span class="detail-value">{{ sensor.user__created|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">
+                            {% if sensor.user__is_active %}
+                                <span class="status-badge active">Active</span>
+                            {% else %}
+                                <span class="status-badge">Inactive</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="no-sensors">No sensors assigned yet</p>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if sensors_data.has_previous %}
+            <a href="?page=1" class="pagination-button first-page" title="First page">
+                <i class="bi bi-chevron-double-left"></i>
+            </a>
+            <a href="?page={{ sensors_data.previous_page_number }}" 
+            class="pagination-button" title="Previous page">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        {% endif %}
+
+        <div class="page-numbers">
+            {% for p in page_range %}
+                <a href="?page={{ p }}" 
+                class="pagination-button {% if p == sensors_data.number %}active{% endif %}">
+                    {{ p }}
+                </a>
+            {% endfor %}
+        </div>
+
+        {% if sensors_data.has_next %}
+            <a href="?page={{ sensors_data.next_page_number }}" 
+            class="pagination-button" title="Next page">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            <a href="?page={{ sensors_data.paginator.num_pages }}" 
+            class="pagination-button last-page" title="Last page">
+                <i class="bi bi-chevron-double-right"></i>
+            </a>
+        {% endif %}
+        
+        <span class="pagination-info">
+            {{ sensors_data.start_index }}-{{ sensors_data.end_index }} of {{ total_items }} items
+        </span>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="error-modal">
+        <div class="error-modal-content">
+            <div class="error-modal-header">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <h3>Error</h3>
+            </div>
+            <div class="error-modal-message" id="errorMessage"></div>
+            <button class="error-modal-btn" onclick="closeErrorModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="successToast" class="success-toast">
+        <i class="bi bi-check-circle-fill"></i>
+        <span id="successMessage"></span>
+    </div>
+</div>
+
+<script>
+function toggleDetails(header) {
+    const card = header.closest('.sensor-card');
+    card.classList.toggle('expanded');
+}
+
+
+function toggleAdminForm() {
+    const form = document.getElementById('adminRegistrationForm');
+    const btn = document.getElementById('showAdminFormBtn');
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        btn.style.display = 'none';
+    } else {
+        form.style.display = 'none';
+        btn.style.display = 'block';
+    }
+}
+
+function showError(message) {
+    const errorModal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorModal.style.display = 'block';
+}
+
+function closeErrorModal() {
+    const errorModal = document.getElementById('errorModal');
+    errorModal.style.display = 'none';
+}
+
+function showSuccess(message) {
+    const successToast = document.getElementById('successToast');
+    const successMessage = document.getElementById('successMessage');
+    successMessage.textContent = message;
+    
+    // Show the toast
+    successToast.classList.add('show');
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+        successToast.classList.remove('show');
+        // Add additional timeout to wait for fade out
+        setTimeout(() => {
+            successToast.style.display = 'none';
+        }, 300);
+    }, 3000);
+}
+
+// Close modal when clicking outside
+window.onclick = (event) => {
+    const errorModal = document.getElementById('errorModal');
+    if (event.target === errorModal) {
+        closeErrorModal();
+    }
+};
+
+
+document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    try {
+        const response = await fetch('/api/admin/create-admin/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (response.ok) {
+                showSuccess('Admin created successfully!');
+                toggleAdminForm(); // Hide the form
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                let errorMessage = 'Error creating admin';
+                if (data.message) {
+                    try {
+                        const errors = JSON.parse(data.message);
+                        errorMessage = Object.values(errors).flat().join('\n');
+                    } catch {
+                        errorMessage = data.message;
+                    }
+                }
+                showError(errorMessage);
+            }
+        } else {
+            throw new Error('Expected JSON response');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Failed to create admin. Please try again.');
+    }
+});
+document.getElementById('showAdminFormBtn').addEventListener('click', toggleAdminForm);
+
+function hidePaginatorIfNoData() {
+    const hasCards = document.querySelectorAll('.sensor-card').length > 0;
+    const paginator = document.querySelector('.pagination');
+    if (paginator) paginator.style.display = hasCards ? '' : 'none';
+}
+
+// Call on page load
+window.addEventListener('DOMContentLoaded', hidePaginatorIfNoData);
+// If you have dynamic delete, call hidePaginatorIfNoData after delete as well.
+</script>
+{% endblock %}

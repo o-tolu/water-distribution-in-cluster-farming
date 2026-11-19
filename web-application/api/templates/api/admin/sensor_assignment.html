@@ -1,0 +1,442 @@
+{% extends 'api/admin/base.html' %}
+
+{% block admin_content %}
+<style>
+    .sensor-assignment {
+        color: #e8f6ff;
+    }
+    
+    .sensor-assignment h2 {
+        font-size: min(28px, 6vw);
+        font-weight: 600;
+        margin-bottom: min(25px, 5vw);
+        display: flex;
+        align-items: center;
+        gap: min(10px, 2vw);
+    }
+
+    .sensor-assignment h2 i {
+        color: #64b5f6;
+    }
+
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+        gap: min(20px, 4vw);
+        margin-bottom: min(30px, 6vw);
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: min(20px, 4vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-card h4 {
+        font-size: min(16px, 4vw);
+        color: #90caf9;
+        margin-bottom: min(10px, 2vw);
+    }
+
+    .stat-value {
+        font-size: min(24px, 6vw);
+        font-weight: 700;
+        color: #64b5f6;
+    }
+    
+    .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+        gap: min(20px, 4vw);
+    }
+    
+    .user-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    }
+    
+    .user-header {
+        padding: min(20px, 4vw);
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: min(15px, 3vw);
+    }
+    
+    .user-avatar {
+        width: min(50px, 12vw);
+        height: min(50px, 12vw);
+        background: rgba(100, 181, 246, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .user-avatar i {
+        font-size: min(24px, 6vw);
+        color: #64b5f6;
+    }
+    
+    .user-details {
+        flex: 1;
+    }
+    
+    .user-name {
+        font-size: min(18px, 4.5vw);
+        font-weight: 600;
+        color: #e8f6ff;
+        margin: 0;
+    }
+    
+    .user-email {
+        font-size: min(14px, 3.5vw);
+        color: rgba(255, 255, 255, 0.7);
+        margin: min(5px, 1vw) 0 0;
+    }
+
+    .user-meta {
+        font-size: min(12px, 3vw);
+        color: rgba(255, 255, 255, 0.6);
+        margin: 2px 0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .sensor-status {
+        padding: min(20px, 4vw);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: min(6px, 1.5vw) min(12px, 2.5vw);
+        border-radius: 20px;
+        font-size: min(14px, 3.5vw);
+        margin-bottom: min(15px, 3vw);
+    }
+    
+    .status-unassigned {
+        background: rgba(244, 67, 54, 0.1);
+        color: #ff8a80;
+        border: 1px solid rgba(244, 67, 54, 0.2);
+    }
+    
+    .status-assigned {
+        background: rgba(76, 175, 80, 0.1);
+        color: #81c784;
+        border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+    
+    .assign-btn {
+        background: linear-gradient(45deg, #2196f3, #64b5f6);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        padding: min(10px, 2.5vw) min(20px, 4vw);
+        font-size: min(14px, 3.5vw);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: min(8px, 2vw);
+    }
+    
+    .assign-btn:hover {
+        background: linear-gradient(45deg, #1976d2, #42a5f5);
+        transform: translateY(-2px);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+    }
+    
+    .modal-content {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        border-radius: 15px;
+        padding: min(25px, 5vw);
+        width: 90%;
+        max-width: 400px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .modal-header {
+        margin-bottom: min(20px, 4vw);
+    }
+    
+    .modal-header h3 {
+        font-size: min(20px, 5vw);
+        color: #e8f6ff;
+        margin: 0;
+    }
+    
+    .modal select {
+        width: 100%;
+        padding: min(12px, 2.5vw);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #e8f6ff;
+        font-size: min(16px, 4vw);
+        margin-bottom: min(20px, 4vw);
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: min(10px, 2vw);
+    }
+    
+    .modal-btn {
+        flex: 1;
+        padding: min(10px, 2.5vw);
+        border-radius: 8px;
+        font-size: min(14px, 3.5vw);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .modal select + select {
+        margin-top: 0;
+    }
+    
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e8f6ff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-assign {
+        background: linear-gradient(45deg, #2196f3, #64b5f6);
+        color: white;
+        border: none;
+    }
+
+    select option:disabled {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+    }
+
+    .modal select option {
+        background-color: #1e3c72;
+        color: #e8f6ff;
+        padding: 8px;
+    }
+
+    .modal select option:checked {
+        background: linear-gradient(45deg, #2196f3, #64b5f6);
+    }
+</style>
+
+<div class="sensor-assignment">
+    <h2><i class="bi bi-cpu"></i> Sensor Assignment</h2>
+
+    <div class="stats-summary">
+        <div class="stat-card">
+            <h4>Unassigned Users</h4>
+            <div class="stat-value">{{ unassigned_users_count }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>Available Sensors</h4>
+            <div class="stat-value">{{ available_sensors_count }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>Total Assignments</h4>
+            <div class="stat-value">{{ total_assignments }}</div>
+        </div>
+    </div>
+
+    <div class="users-grid">
+        {% for user in users %}
+        <div class="user-card">
+            <div class="user-header">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="user-details">
+                        <h3 class="user-name">{{ user.firstname }} {{ user.lastname }}</h3>
+                        <p class="user-email">{{ user.email }}</p>
+                        {% if user.rfid_number %}
+                            <p class="user-meta"><i class="bi bi-credit-card"></i> RFID: {{ user.rfid_number }}</p>
+                        {% endif %}
+                        {% if user.matric_number %}
+                            <p class="user-meta"><i class="bi bi-person-badge"></i> Matric: {{ user.matric_number }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sensor-status">
+                {% if user.assigned_sensor %}
+                    <span class="status-badge status-assigned">
+                        <i class="bi bi-check-circle"></i> Assigned to Sensor {{ user.assigned_sensor }}
+                        {% if user.farm_location %}
+                            <br>
+                            <small><i class="bi bi-geo-alt"></i> {{ user.farm_location.name }}</small>
+                        {% endif %}
+                    </span>
+                    <button class="assign-btn" onclick="showReassignModal('{{ user.id }}', '{{ user.firstname }}', '{{ user.assigned_sensor }}')">
+                        <i class="bi bi-arrow-repeat"></i> Reassign Sensor
+                    </button>
+                {% else %}
+                    <span class="status-badge status-unassigned">
+                        <i class="bi bi-exclamation-circle"></i> No Sensor Assigned
+                    </span>
+                    <button class="assign-btn" onclick="showAssignModal('{{ user.id }}', '{{ user.firstname }}')">
+                        <i class="bi bi-plus-circle"></i> Assign Sensor
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <p>No users available for sensor assignment</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Assignment Modal -->
+<div id="assignModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Assign Sensor</h3>
+        </div>
+        <form id="assignForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" id="selectedUserId">
+            
+            <select name="sensor_id" id="sensorSelect" required>
+                <option value="">Select a Sensor...</option>
+                {% for sensor in all_sensors %}
+                    <option value="{{ sensor }}" 
+                            {% if sensor not in available_sensors %}disabled{% endif %}>
+                        Sensor {{ sensor }}
+                        {% if sensor not in available_sensors %}(In Use){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="farm_location" id="farmLocationSelect" required>
+                <option value="">Select Farm Location...</option>
+                {% for location in farm_locations %}
+                    <option value="{{ location.id }}">{{ location.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="modal-btn btn-assign">Assign</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+let currentOperation = 'assign';
+let currentSensorId = null;
+
+function showAssignModal(userId, userName) {
+    currentOperation = 'assign';
+    currentSensorId = null;
+    document.getElementById('modalTitle').textContent = `Assign Sensor to ${userName}`;
+    document.getElementById('selectedUserId').value = userId;
+    resetSensorSelect();
+    document.getElementById('assignModal').style.display = 'block';
+}
+
+
+function showReassignModal(userId, userName, currentSensor) {
+    currentOperation = 'reassign';
+    currentSensorId = currentSensor;
+    document.getElementById('modalTitle').textContent = `Reassign Sensor for ${userName}`;
+    document.getElementById('selectedUserId').value = userId;
+    resetSensorSelect();
+    document.getElementById('assignModal').style.display = 'block';
+}
+
+function resetSensorSelect() {
+    const sensorSelect = document.getElementById('sensorSelect');
+    const options = sensorSelect.options;
+    
+    for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        if (currentOperation === 'reassign' && option.value === currentSensorId) {
+            option.disabled = false;
+            option.selected = true;
+        }
+    }
+}
+
+function closeModal() {
+    document.getElementById('assignModal').style.display = 'none';
+    document.getElementById('assignForm').reset();
+}
+
+document.getElementById('assignForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    try {
+        const response = await fetch('/api/admin/assign-sensor/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error assigning sensor');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to assign sensor');
+    }
+};
+
+// Close modal when clicking outside
+window.onclick = (event) => {
+    const modal = document.getElementById('assignModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+};
+</script>
+{% endblock %}

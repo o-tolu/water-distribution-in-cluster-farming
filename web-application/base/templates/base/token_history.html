@@ -1,0 +1,443 @@
+{% extends 'base/main.html' %}
+{% block content %}
+
+<style>
+    .history-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .history-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        transition: transform 0.2s;
+        height: 380px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .history-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .token-info {
+        color: #e8f6ff;
+        flex: 0 0 auto;
+    }
+
+    .value {
+        color: #64b5f6;
+        font-weight: bold;
+    }
+
+    .timeline {
+        border-left: 2px solid rgba(100, 181, 246, 0.5);
+        padding-left: 20px;
+        margin: 5px 0;
+        flex: 1 1 auto;
+        min-height: 60px;
+    }
+
+    .timestamp {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: rgba(76, 175, 80, 0.2);
+        color: #81c784;
+        border: 2px solid rgba(76, 175, 80, 0.3);
+    }
+
+    .status-inactive {
+        background: rgba(244, 67, 54, 0.2);
+        color: #e57373;
+        border: 2px solid rgba(244, 67, 54, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .error-message {
+        background: rgba(244, 67, 54, 0.1);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        color: #ff8a80;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .status-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+
+    .delete-btn {
+        background: none;
+        border: none;
+        color: rgba(244, 67, 54, 0.8);
+        padding: 5px;
+        border-radius: 50%;
+        transition: all 0.2s;
+        cursor: pointer;
+        font-size: 1.5rem;
+    }
+
+    .delete-btn:hover {
+        background: rgba(244, 67, 54, 0.1);
+        color: rgb(244, 67, 54);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        border-radius: 15px;
+        padding: 25px;
+        width: 90%;
+        max-width: 400px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header {
+        margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        color: #e8f6ff;
+        margin: 0;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .modal-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e8f6ff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-assign {
+        background: linear-gradient(45deg, #2196f3, #64b5f6);
+        color: white;
+        border: none;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        /* margin-top: 2rem; */
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pagination-button {
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: #e8f6ff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .pagination-button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #64b5f6;
+    }
+
+    .pagination-button.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+
+    .pagination-info {
+        color: #e8f6ff;
+        font-size: 14px;
+        margin: 0 15px;
+        white-space: nowrap;
+    }
+
+    .pagination-button.first-page,
+    .pagination-button.last-page {
+        font-size: 20px;
+    }
+
+    @media screen and (max-width: 640px) {
+        .pagination {
+            gap: 8px;
+        }
+        
+        .pagination-button {
+            padding: 6px 12px;
+            min-width: 35px;
+            height: 35px;
+            font-size: 13px;
+        }
+        
+        .page-numbers {
+            order: 2;
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 5px;
+        }
+        
+        .pagination-info {
+            width: 100%;
+            text-align: center;
+            order: 3;
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<div class="history-container">
+    <h2 class="page-title">Token History</h2>
+
+    {% if error and has_sensor or error and has_active_token %}
+        <div class="error-message">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {{ error }}
+        </div>
+    {% endif %}
+
+    {% if token_history %}
+        <div class="row">
+            {% for entry in token_history %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="history-card">
+                        <div class="token-info">
+                            <p>Token Amount: <span class="value">{{ entry.token_amount|floatformat:2 }}</span></p>
+                            <p>Volume Limit: <span class="value">{{ entry.volume_limit|floatformat:2 }} L</span></p>
+                            <p>Volume Used: <span class="value">{{ entry.volume_used|floatformat:2 }} L</span></p>
+                            <p>Remaining: <span class="value">{{ entry.remaining_volume|floatformat:2 }} L</span></p>
+                        </div>
+
+                        <div class="timeline">
+                            {% if entry.start_date %}
+                                <p class="timestamp"><i class="bi bi-clock-history"></i> Created: {{ entry.start_date }}</p>
+                            {% endif %}
+                            {% if entry.last_updated %}
+                                <p class="timestamp"><i class="bi bi-arrow-clockwise"></i> Last Updated: {{ entry.last_updated }}</p>
+                            {% endif %}
+                            {% if entry.end_date %}
+                                <p class="timestamp text-danger"><i class="bi bi-hourglass-bottom"></i> Depleted: {{ entry.end_date }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="status-wrapper">
+                            <span class="status-badge {% if entry.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                {{ entry.is_active|yesno:"Active,Depleted" }}
+                            </span>
+                            <form method="post" class="d-inline" data-token-id="{{ entry.id }}" onsubmit="return handleDelete(event)">
+                                {% csrf_token %}
+                                <input type="hidden" name="token_id" value="{{ entry.id }}">
+                                <button type="submit" class="delete-btn" title="Delete token">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            {% if token_history.has_previous %}
+                <a href="?page=1" class="pagination-button first-page" title="First page">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+                <a href="?page={{ token_history.previous_page_number }}" 
+                class="pagination-button" title="Previous page">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            {% endif %}
+
+            <div class="page-numbers">
+                {% for p in page_range %}
+                    <a href="?page={{ p }}" 
+                    class="pagination-button {% if p == token_history.number %}active{% endif %}">
+                        {{ p }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            {% if token_history.has_next %}
+                <a href="?page={{ token_history.next_page_number }}" 
+                class="pagination-button" title="Next page">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                <a href="?page={{ token_history.paginator.num_pages }}" 
+                class="pagination-button last-page" title="Last page">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            {% endif %}
+            
+            <span class="pagination-info">
+                {{ token_history.start_index }}-{{ token_history.end_index }} of {{ total_items }} items
+            </span>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-clock-history fs-1 mb-3"></i>
+            <h4>No Token History Available</h4>
+            <p>Your token transaction history will appear here once you make a purchase.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal for delete confirmation -->
+<div id="deleteConfirmModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Confirm Delete</h3>
+    </div>
+    <p style="color:#e8f6ff; margin-bottom:20px;">Are you sure you want to delete this token? This action cannot be undone.</p>
+    <div class="modal-buttons">
+      <button type="button" class="modal-btn btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="modal-btn btn-assign" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let deleteForm = null;
+
+function handleDelete(event) {
+    event.preventDefault();
+    deleteForm = event.target;
+    document.getElementById('deleteConfirmModal').style.display = 'block';
+    return false;
+}
+
+function confirmDelete() {
+    const formData = new FormData(deleteForm);
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const card = deleteForm.closest('.col-md-6');
+            card.style.opacity = '0';
+            setTimeout(() => {
+                card.remove();
+                const remainingCards = document.querySelectorAll('.history-card');
+                if (remainingCards.length === 0) {
+                    const row = document.querySelector('.row');
+                    const emptyState = `
+                        <div class="empty-state">
+                            <i class="bi bi-clock-history fs-1 mb-3"></i>
+                            <h4>No Token History Available</h4>
+                            <p>Your token transaction history will appear here once you make a purchase.</p>
+                        </div>
+                    `;
+                    row.innerHTML = emptyState;
+                    // Hide paginator if no cards left
+                    const paginator = document.querySelector('.pagination');
+                    if (paginator) paginator.style.display = 'none';
+                }
+            }, 300);
+        } else {
+            throw new Error(data.error || 'Delete failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message);
+    })
+    .finally(() => {
+        closeDeleteModal();
+    });
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+    deleteForm = null;
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (event.target === modal) {
+        closeDeleteModal();
+    }
+}
+</script>
+
+{% endblock content %}

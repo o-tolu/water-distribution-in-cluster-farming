@@ -1,0 +1,531 @@
+{% extends 'api/admin/base.html' %}
+
+{% block admin_content %}
+<style>
+    .token-history {
+        color: #e8f6ff;
+        padding: 0 min(15px, 3vw);
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .token-history h2 {
+        font-size: min(28px, 6vw);
+        font-weight: 600;
+        margin-bottom: min(25px, 5vw);
+        display: flex;
+        align-items: center;
+        gap: min(10px, 2vw);
+    }
+
+    .token-history h2 i {
+        color: #64b5f6;
+    }
+    
+    .filters {
+        display: flex;
+        gap: min(15px, 3vw);
+        margin: min(20px, 4vw) 0;
+        flex-wrap: wrap;
+        max-width: 100%; 
+    }
+
+    .search-form {
+        display: flex;
+        gap: min(15px, 3vw);
+        width: 100%;
+        flex-wrap: wrap; 
+    }
+    
+    .search-input, .status-filter {
+        padding: min(12px, 2.5vw) min(15px, 3vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #e8f6ff;
+        font-family: 'Inter', sans-serif;
+        font-size: min(16px, 4vw);
+        backdrop-filter: blur(10px);
+        flex: 1 1 auto;
+        min-width: 150px;
+        max-width: 100%;
+        width: auto;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus, .status-filter:focus {
+        outline: none;
+        border-color: #64b5f6;
+        box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2);
+    }
+    
+    .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .history-table-wrapper {
+        overflow-x: auto;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        margin-top: min(20px, 4vw);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        max-height: 70vh; /* Set maximum height */
+        overflow-y: auto; /* Enable vertical scrolling */
+        scrollbar-width: thin;
+        scrollbar-color: #64b5f6 rgba(255, 255, 255, 0.1);
+
+        overscroll-behavior: none;
+        /* touch-action: auto; */
+        position: relative;
+    }
+    
+    .history-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-family: 'Inter', sans-serif;
+
+        position: relative;
+        transform: translate3d(0, 0, 0);
+        -webkit-transform: translate3d(0, 0, 0);
+    }
+    
+    .history-table th,
+    .history-table td {
+        padding: min(15px, 3vw);
+        text-align: left;
+        font-size: min(14px, 3.5vw);
+    }
+    
+    .history-table th {
+        background: #1e3c72; 
+        font-weight: 600;
+        color: #90caf9;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    
+
+    .history-table tr {
+        transition: all 0.3s ease;
+    }
+
+    .history-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .history-table td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+        padding: min(10px, 2vw) min(15px, 3vw); 
+    }
+    
+    
+    .status-badge {
+        padding: min(6px, 1.5vw) min(12px, 2.5vw);
+        border-radius: 20px;
+        font-size: min(12px, 3vw);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .status-badge.active {
+        background: rgba(34, 197, 94, 0.2);
+        color: #86efac;
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    .status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: min(30px, 6vw);
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        font-size: min(16px, 4vw);
+    }
+
+    /* Animation for table rows */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .token-row {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    .search-form {
+        display: flex;
+        gap: min(15px, 3vw);
+        width: 100%;
+    }
+
+    .user-details, .user-meta {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+    }
+
+    .text-muted {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.85em;
+    }
+
+    .user-info small {
+        display: block;
+    }
+
+    .status-filter {
+        /* ... existing styles ... */
+        padding-right: 35px;  /* Increase right padding to make room for the icon */
+        appearance: none;  /* Remove default dropdown arrow */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364b5f6' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: calc(100% - 12px) center;  /* Position the custom arrow */
+        background-size: 12px;
+    }
+
+    .status-filter:focus {
+      
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2390caf9' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    }
+
+ 
+    /* Add these custom scrollbar styles after the existing styles */
+    .history-table-wrapper::-webkit-scrollbar {
+        width: 8px;
+        height: 8px; /* For horizontal scrollbar */
+    }
+
+    .history-table-wrapper::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    .history-table-wrapper::-webkit-scrollbar-thumb {
+        background: #64b5f6;
+        border-radius: 4px;
+    }
+
+    .history-table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #42a5f5;
+    }
+
+   
+
+    .history-table-wrapper::-webkit-scrollbar-corner {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    @media screen and (max-width: 640px) {
+    .search-input, .status-filter {
+        width: 100%; 
+        min-width: 100%;
+    }
+    .token-history h2 {
+        font-size: 22px;
+    }
+    .history-table {
+        font-size: 14px; 
+    }
+    
+    .status-badge {
+        padding: 4px 8px; 
+    }
+}
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-top: 2rem;
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pagination-button {
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: #e8f6ff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .pagination-button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #64b5f6;
+    }
+
+    .pagination-button.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+
+    .pagination-info {
+        color: #e8f6ff;
+        font-size: 14px;
+        margin: 0 15px;
+        white-space: nowrap;
+    }
+
+    /* First/Last page buttons */
+    .pagination-button.first-page,
+    .pagination-button.last-page {
+        font-size: 20px;
+    }
+
+    @media screen and (max-width: 640px) {
+        .pagination {
+            gap: 8px;
+        }
+        
+        .pagination-button {
+            padding: 6px 12px;
+            min-width: 35px;
+            height: 35px;
+            font-size: 13px;
+        }
+        
+        .page-numbers {
+            order: 2;
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 5px;
+        }
+        
+        .pagination-info {
+            width: 100%;
+            text-align: center;
+            order: 3;
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<div class="token-history">
+    <h2><i class="bi bi-clock-history"></i> Token Purchase History</h2>
+    
+    <div class="filters">
+        <form id="searchForm" class="search-form">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search by sensor ID, user ID, email, or username..." 
+                class="search-input"
+                value="{{ search_query|default:'' }}"
+            >
+            <select id="statusFilter" class="status-filter">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Tokens</option>
+                <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expired Tokens</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="history-table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>User Information</th>
+                    <th>Amount</th>
+                    <th>Volume</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for token in tokens %}
+                <tr class="token-row" 
+                    data-user="{{ token.user.firstname|lower }} {{ token.user.lastname|lower }}"
+                    data-sensor="{{ token.sensor_id }}"
+                    data-userid="{{ token.user.user_id }}"
+                    data-email="{{ token.user.email|lower }}"
+                    data-username="{{ token.user.username|lower }}">
+                    <td>
+                        <div class="user-info">
+                            <div class="user-details">{{ token.user.firstname }} {{ token.user.lastname }}</div>
+                            <div class="user-meta">
+                                <span class="meta-item">
+                                    <i class="bi bi-person-badge"></i>
+                                    {{ token.user.user_id|truncatechars:8 }}
+                                </span>
+                                <span class="meta-item">
+                                    <!-- <i class="bi bi-water"></i> -->
+                                    Sensor {{ token.sensor_id }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><i class="bi bi-coin"></i> {{ token.token_amount|floatformat:2 }}</td>
+                    <td>{{ token.volume_limit|floatformat:2 }}L</td>
+                    <td>{{ token.start_date|date:"M d, Y H:i" }}</td>
+                    <td>{{ token.end_date|date:"M d, Y H:i"|default:"N/A" }}</td>
+                    <td>
+                        <span class="status-badge {% if token.is_active %}active{% endif %}">
+                            {{ token.is_active|yesno:"Active,Expired" }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="no-data">No token history available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        {% if tokens.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+            class="pagination-button first-page" title="First page">
+                <i class="bi bi-chevron-double-left"></i>
+            </a>
+            <a href="?page={{ tokens.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+            class="pagination-button" title="Previous page">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        {% endif %}
+
+        <div class="page-numbers">
+            {% for p in page_range %}
+                <a href="?page={{ p }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                class="pagination-button {% if p == tokens.number %}active{% endif %}">
+                    {{ p }}
+                </a>
+            {% endfor %}
+        </div>
+
+        {% if tokens.has_next %}
+            <a href="?page={{ tokens.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+            class="pagination-button" title="Next page">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            <a href="?page={{ tokens.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+            class="pagination-button last-page" title="Last page">
+                <i class="bi bi-chevron-double-right"></i>
+            </a>
+        {% endif %}
+        
+        <span class="pagination-info">
+            {{ tokens.start_index }}-{{ tokens.end_index }} of {{ total_items }} items
+        </span>
+    </div>
+</div>
+
+<script>
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('statusFilter').addEventListener('change', filterTable);
+
+function filterTable() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('.token-row');
+    let visibleRows = 0;
+
+    rows.forEach(row => {
+        const sensor = row.getAttribute('data-sensor').toLowerCase();
+        const userId = row.getAttribute('data-userid').toLowerCase();
+        const email = row.getAttribute('data-email').toLowerCase();
+        const username = row.getAttribute('data-username').toLowerCase();
+        const user = row.getAttribute('data-user').toLowerCase();
+        
+        const status = row.querySelector('.status-badge').classList.contains('active');
+        const statusMatch = statusFilter === 'all' || 
+                          (statusFilter === 'active' && status) || 
+                          (statusFilter === 'expired' && !status);
+        
+        const searchMatch = searchTerm === '' || 
+                          sensor === searchTerm || // Exact match for sensor ID
+                          userId.includes(searchTerm) ||
+                          email.includes(searchTerm) ||
+                          username.includes(searchTerm) ||
+                          user.includes(searchTerm);
+                          
+        const isVisible = searchMatch && statusMatch;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleRows++;
+    });
+
+    // Get or create the no-data row
+    let noDataRow = document.querySelector('.no-data-row');
+    if (!noDataRow) {
+        noDataRow = document.createElement('tr');
+        noDataRow.className = 'no-data-row';
+        noDataRow.innerHTML = '<td colspan="6" class="no-data">No token history available</td>';
+        document.querySelector('.history-table tbody').appendChild(noDataRow);
+    }
+
+    // Show/hide the no-data message based on visible rows
+    noDataRow.style.display = visibleRows === 0 ? '' : 'none';
+
+    // Hide paginator if no data rows are visible
+    const paginator = document.querySelector('.pagination');
+    if (paginator) paginator.style.display = visibleRows === 0 ? 'none' : '';
+
+    // Update URL without page refresh
+    const url = new URL(window.location);
+    url.searchParams.set('search', document.getElementById('searchInput').value);
+    url.searchParams.set('status', document.getElementById('statusFilter').value);
+    window.history.pushState({}, '', url);
+}
+
+// Initialize filter on page load if URL has parameters
+window.addEventListener('load', () => {
+    const url = new URL(window.location);
+    const searchQuery = url.searchParams.get('search');
+    const statusFilter = url.searchParams.get('status');
+    
+    if (searchQuery) {
+        document.getElementById('searchInput').value = searchQuery;
+    }
+    if (statusFilter) {
+        document.getElementById('statusFilter').value = statusFilter;
+    }
+    
+    filterTable();
+});
+</script>
+{% endblock %}

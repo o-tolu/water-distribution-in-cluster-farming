@@ -1,0 +1,252 @@
+
+{% extends 'base/main.html' %}
+{% block content %}
+    <style>
+        
+        .header {
+            font-size: 30px;
+            font-weight: bold;
+            color: #e8f6ff;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            
+        }
+
+        .form-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 90%;
+            max-width: 360px;
+            margin: 30px auto 20px;
+        }
+
+        h2 {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 25px;
+            font-size:  min(24px, 6vw);
+        }
+
+        .input-group {
+            position: relative;
+            margin: min(25px, 4vh) 0;
+        }
+
+        .input-field-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-group input {
+          width: 100%;
+          padding: min(12px, 3vh) min(15px, 4vw);
+          background: rgba(255, 255, 255, 0.07);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          font-size: min(15px, 4vw);
+          color: #fff;
+          transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #64b5f6;
+            outline: none;
+            box-shadow: 0 0 10px rgba(100, 181, 246, 0.3);
+        }
+
+        .input-group label {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 15px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -10px;
+            left: 10px;
+            font-size: 12px;
+            padding: 0 5px;
+            color: #64b5f6;
+            background: rgba(26, 32, 44, 0.8);
+            border-radius: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            
+            padding: min(12px, 3vh);
+            font-size: min(16px, 4.5vw);
+            margin-top: min(20px, 3vh);
+            background: linear-gradient(45deg, #2196f3, #64b5f6);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #1976d2, #42a5f5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            background: none;
+            border: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+            padding: 0;
+        }
+
+        .toggle-password:hover {
+            color: #64b5f6;
+        }
+
+        .signup {
+            color: #90caf9;
+            text-decoration: none;
+            font-size: min(14px, 4vw);
+            margin-top: min(20px, 3vh);
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .signup:hover {
+            color: #64b5f6;
+            text-decoration: underline;
+        }
+
+        .error {
+            color: #ff8a80;
+            font-size: 13px;
+            margin-top: 5px;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        .btn i {
+            margin-left: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn.clicked .bi-door-open {
+            display: none;
+        }
+
+        .btn.clicked .bi-box-arrow-in-right {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Smart Water Distribution Management</div>
+    
+        <div class="form-container">
+            <h2>Login</h2>
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="input-group">
+                    <div class="input-field-container">
+                        <input type="text" id="username" name="username" placeholder=" " required>
+                        <label for="username">Username</label>
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="error">
+                            {% for error in form.username.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="input-group">
+                <div class="input-field-container">
+                    <input type="password" id="password" name="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                    <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                        <i class="bi bi-eye"></i>
+                        <i class="bi bi-eye-slash" style="display: none;"></i>
+                    </button>
+                </div>
+                {% if form.password.errors %}
+                    <div class="error">
+                        {% for error in form.password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div style="text-align: right; margin-top: -30px;">
+                <a href="{% url 'password_reset' %}" class="signup">Forgot Password?</a>
+            </div>
+
+                <button type="submit" class="btn" onclick="animateButton(this)">
+                    Log In <i class="bi bi-water"></i>
+                </button>
+
+                {% if form.non_field_errors %}
+                    <div class="error">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </form>
+            <a class="signup" href="{% url 'register' %}">Don't have an account yet? Sign up</a>
+            
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+          const passwordField = document.getElementById(fieldId);
+          const toggleButton = passwordField.nextElementSibling.nextElementSibling;
+          const eyeIcon = toggleButton.querySelector('.bi-eye');
+          const eyeSlashIcon = toggleButton.querySelector('.bi-eye-slash');
+          
+          if (passwordField.type === "password") {
+              passwordField.type = "text";
+              eyeIcon.style.display = "none";
+              eyeSlashIcon.style.display = "inline-block";
+          } else {
+              passwordField.type = "password";
+              eyeIcon.style.display = "inline-block";
+              eyeSlashIcon.style.display = "none";
+          }
+      }
+
+        function animateButton(button) {
+            button.classList.add('clicked');
+            const icon = button.querySelector('i');
+            icon.classList.add('bi-water');
+            
+            setTimeout(() => {
+                button.closest('form').submit();
+            }, 300);
+        }
+    </script>
+{% endblock content %}
